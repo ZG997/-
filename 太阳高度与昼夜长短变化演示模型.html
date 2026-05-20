@@ -2,569 +2,674 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D太阳高度角与昼夜长短动画演示</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D太阳高度角与昼夜长短动画演示 - 地轴自转版</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            font-family: 'Arial', sans-serif;
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
         }
         #info-panel {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0,0,0,0.7);
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0,0,0,0.75);
             color: white;
-            padding: 15px;
-            border-radius: 5px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
             z-index: 100;
-            max-width: 300px;
+            max-width: 320px;
+            pointer-events: none;
+            border-left: 4px solid #ffaa00;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 14px;
         }
-        #controls {
+        #info-panel h2 {
+            margin: 0 0 8px 0;
+            font-size: 1.2rem;
+            color: #ffaa66;
+        }
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 3px;
+        }
+        .data-label {
+            font-weight: bold;
+        }
+        .data-value {
+            font-family: monospace;
+            font-weight: bold;
+            color: #ffaa66;
+        }
+        .note {
+            font-size: 11px;
+            color: #ccc;
+            margin-top: 8px;
+            text-align: center;
+        }
+        details {
             position: absolute;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0,0,0,0.7);
-            padding: 15px;
-            border-radius: 5px;
+            width: auto;
+            min-width: 320px;
+            z-index: 200;
+            background: rgba(30,30,40,0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 13px;
+        }
+        summary {
+            cursor: pointer;
+            background-color: #3a6ea5cc;
+            padding: 8px 15px;
+            border-radius: 30px;
+            text-align: center;
+            font-weight: bold;
             color: white;
-            z-index: 100;
+            transition: 0.2s;
+            list-style: none;
+            display: inline-block;
+            width: auto;
+            margin: 0 auto;
+        }
+        summary::-webkit-details-marker {
+            display: none;
+        }
+        details[open] summary {
+            background-color: #ff8c42cc;
+            border-radius: 20px 20px 0 0;
+        }
+        .controls-container {
+            padding: 15px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 10px;
+            gap: 15px;
+            background: rgba(0,0,0,0.6);
+            border-radius: 20px;
+            margin-top: 5px;
         }
         .control-group {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 12px;
+            border-radius: 16px;
+            min-width: 180px;
+        }
+        .control-group h3 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            text-align: center;
+            color: #ddd;
         }
         .slider-container {
             display: flex;
             align-items: center;
-            margin: 5px 0;
-        }
-        .slider-label {
-            width: 80px;
-            text-align: right;
-            margin-right: 10px;
+            gap: 10px;
+            margin: 8px 0;
         }
         button {
-            padding: 8px 15px;
-            margin: 5px;
+            padding: 5px 12px;
+            margin: 3px;
             border: none;
-            border-radius: 4px;
-            background-color: #4CAF50;
+            border-radius: 20px;
+            background-color: #2c5a7a;
             color: white;
             cursor: pointer;
-            transition: background-color 0.3s;
+            font-size: 12px;
+            transition: all 0.2s ease;
         }
         button:hover {
-            background-color: #45a049;
+            background-color: #ff8c42;
+            transform: scale(1.02);
         }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
+        button:active {
+            transform: scale(0.98);
         }
-        #animation-speed {
-            width: 100px;
+        input[type="range"] {
+            flex: 1;
+            cursor: pointer;
         }
-        #current-date {
-            font-weight: bold;
-            color: #FFD700;
+        .value-display {
+            min-width: 40px;
+            text-align: center;
+            background: #000000aa;
+            border-radius: 20px;
+            padding: 2px 6px;
         }
-        #solar-altitude {
-            font-weight: bold;
-            color: #FFA500;
-        }
-        #day-length {
-            font-weight: bold;
-            color: #1E90FF;
-        }
-        .data-value {
-            display: inline-block;
-            min-width: 80px;
+        @media (max-width: 700px) {
+            .controls-container { flex-direction: column; align-items: stretch; gap: 8px; }
+            .control-group { min-width: auto; }
+            #info-panel { top: 10px; left: 10px; max-width: 260px; font-size: 11px; padding: 8px 12px; }
         }
     </style>
 </head>
 <body>
     <div id="info-panel">
-        <h2>太阳高度角与昼夜长短演示</h2>
-        <div>
-            <div>当前日期: <span id="current-date" class="data-value">春分(3月21日)</span></div>
-            <div>纬度: <span id="current-latitude" class="data-value">0°</span></div>
-            <div>太阳赤纬: <span id="solar-declination" class="data-value">0.0°</span></div>
-            <div>正午太阳高度角: <span id="solar-altitude" class="data-value">90.0°</span></div>
-            <div>昼长: <span id="day-length" class="data-value">12.0小时</span></div>
-            <div>夜长: <span id="night-length" class="data-value">12.0小时</span></div>
-        </div>
+        <h2>🌞 太阳高度角 & 昼夜长短 🌍</h2>
+        <div class="data-row"><span class="data-label">📅 日期:</span><span id="current-date" class="data-value">春分(3月21日)</span></div>
+        <div class="data-row"><span class="data-label">📍 纬度:</span><span id="current-latitude" class="data-value">0°</span></div>
+        <div class="data-row"><span class="data-label">☀️ 太阳赤纬:</span><span id="solar-declination" class="data-value">0.0°</span></div>
+        <div class="data-row"><span class="data-label">📐 正午太阳高度角:</span><span id="solar-altitude" class="data-value">90.0°</span></div>
+        <div class="data-row"><span class="data-label">🌞 昼长:</span><span id="day-length" class="data-value">12.0小时</span></div>
+        <div class="data-row"><span class="data-label">🌙 夜长:</span><span id="night-length" class="data-value">12.0小时</span></div>
+        <div class="note">✨ 地轴倾角23.5° | 红点: 观察点 | 黄色箭头: 太阳方向</div>
     </div>
 
-    <!DOCTYPE html>
-<html>
-<head>
-<style>
-summary {
-cursor: pointer;
-background-color: #c78bff7f;
-padding: 10px;
-}
-details[open] summary {
-background-color: #ffdcb9;
-}
-</style>
-</head>
-<body>
-<details>
-<summary>控制面板开关</summary>
-<p><div id="controls">
-    <div class="control-group">
-        <h3>位置控制</h3>
-        <div class="slider-container">
-            <span class="slider-label">纬度:</span>
-            <input type="range" id="latitude-slider" min="-90" max="90" value="0" step="1">
-            <span id="latitude-value">0°</span>
+    <details open>
+        <summary>🎮 控制面板</summary>
+        <div class="controls-container">
+            <div class="control-group">
+                <h3>🌎 位置控制</h3>
+                <div class="slider-container">
+                    <span>纬度:</span>
+                    <input type="range" id="latitude-slider" min="-90" max="90" value="0" step="1">
+                    <span id="latitude-value" class="value-display">0°</span>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    <button id="set-equator">赤道(0°)</button>
+                    <button id="set-tropic">北回归线(23.5°)</button>
+                    <button id="set-arctic">北极圈(66.5°)</button>
+                    <button id="set-beijing">北京(40°N)</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>📆 时间控制</h3>
+                <div class="slider-container">
+                    <span>日期:</span>
+                    <input type="range" id="date-slider" min="0" max="365" value="80" step="0.5">
+                    <span id="date-day" class="value-display">第80天</span>
+                </div>
+                <div>
+                    <button id="set-spring-equinox">春分</button>
+                    <button id="set-summer-solstice">夏至</button>
+                    <button id="set-autumn-equinox">秋分</button>
+                    <button id="set-winter-solstice">冬至</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>⏵ 动画控制</h3>
+                <div class="slider-container">
+                    <span>速度:</span>
+                    <input type="range" id="animation-speed" min="0" max="8" value="2" step="0.5">
+                    <span id="speed-value" class="value-display">2x</span>
+                </div>
+                <div>
+                    <button id="play-btn">▶ 播放</button>
+                    <button id="pause-btn" disabled>⏸ 暂停</button>
+                    <button id="reset-btn">🔄 重置</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>🎥 视角</h3>
+                <div>
+                    <button id="view-equator">赤道侧视</button>
+                    <button id="view-pole">北极俯视</button>
+                    <button id="view-sun">太阳视角</button>
+                    <button id="view-side">斜45°</button>
+                </div>
+            </div>
         </div>
-        <button id="set-equator">赤道</button>
-        <button id="set-tropic">北回归线</button>
-        <button id="set-arctic">北极圈</button>
-        <!-- 添加北京按钮 -->
-    <button id="set-beijing">北京</button>
-    </div>
+    </details>
 
-    <div class="control-group">
-        <h3>时间控制</h3>
-        <div class="slider-container">
-            <span class="slider-label">日期:</span>
-            <input type="range" id="date-slider" min="0" max="365" value="80" step="1">
-            <span id="date-day">第80天</span>
-        </div>
-        <button id="set-spring-equinox">春分</button>
-        <button id="set-summer-solstice">夏至</button>
-        <button id="set-autumn-equinox">秋分</button>
-        <button id="set-winter-solstice">冬至</button>
-    </div>
+    <!-- 引入Three.js核心库以及扩展 -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
 
-    <div class="control-group">
-        <h3>动画控制</h3>
-        <div class="slider-container">
-            <span class="slider-label">速度:</span>
-            <input type="range" id="animation-speed" min="1" max="10" value="3" step="1">
-            <span id="speed-value">3x</span>
-        </div>
-        <div>
-            <button id="play-btn">▶ 播放</button>
-            <button id="pause-btn" disabled>❚❚ 暂停</button>
-            <button id="reset-btn">↻ 重置</button>
-        </div>
-    </div>
-
-    <div class="control-group">
-        <h3>视角</h3>
-        <button id="view-equator">赤道视角</button>
-        <button id="view-pole">极地视角</button>
-        <button id="view-sun">太阳视角</button>
-        <button id="view-side">侧面视角</button>
-    </div>
-</div></p>
-</details>
-
-</details>
-</body>
-</html>
-    
-
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
-    <script>
-        // 初始化场景、相机和渲染器
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        
+        // --- 初始化场景、相机、渲染器 ---
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        scene.background = new THREE.Color(0x030318);
+        scene.fog = new THREE.FogExp2(0x030318, 0.003); // 轻微雾效增强星空感
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5, 6, 18);
+        
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000033);
+        renderer.shadowMap.enabled = true; // 开启阴影映射增强立体感
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
-
-
-        // 添加轨道控制器
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        camera.position.set(0, 10, 25);
+        
+        // --- 轨道控制，允许用户交互 ---
+        const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-
-        // 创建太阳
-        const sunGeometry = new THREE.SphereGeometry(3, 32, 32);
-        const sunMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xffcc00,
-            transparent: true,
-            opacity: 0.9
+        controls.autoRotate = false;
+        controls.enableZoom = true;
+        controls.zoomSpeed = 1.2;
+        controls.rotateSpeed = 1.0;
+        controls.target.set(0, 0, 0);
+        
+        // --- 辅助星空效果：粒子系统 (简单的星星)---
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 2000;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 800;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 400;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 300 - 100;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2, transparent: true, opacity: 0.7 });
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        scene.add(stars);
+        
+        // --- 太阳 (光源与球体)---
+        const sunGeometry = new THREE.SphereGeometry(2.8, 64, 64);
+        const sunMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffaa55,
+            emissive: 0xff4411,
+            emissiveIntensity: 0.8,
+            metalness: 0.1,
+            roughness: 0.4
         });
-        const sun = new THREE.Mesh(sunGeometry, sunMaterial);
-        sun.position.set(40, 0, 0);
-        scene.add(sun);
-
-        // 太阳光
-        const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
-        sunLight.position.copy(sun.position);
+        const sunMesh = new THREE.Mesh(sunGeometry, sunMaterial);
+        sunMesh.position.set(25, 0, 0);
+        scene.add(sunMesh);
+        
+        // 增强太阳光晕效果：点光源 + 方向光，并增加环境光
+        const sunLight = new THREE.DirectionalLight(0xffeedd, 1.4);
+        sunLight.position.copy(sunMesh.position);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
         scene.add(sunLight);
-
-        // 环境光
-        const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-        scene.add(ambientLight);
-
-        // 创建地球
-        const earthRadius = 2;
-        const earthGeometry = new THREE.SphereGeometry(earthRadius, 64, 64);
         
-        // 加载地球纹理
+        // 补光，让背阴面不太暗
+        const ambientLight = new THREE.AmbientLight(0x22223b, 0.55);
+        scene.add(ambientLight);
+        const fillLight = new THREE.PointLight(0x4466cc, 0.3);
+        fillLight.position.set(-5, 5, 10);
+        scene.add(fillLight);
+        
+        // 太阳周围的泛光粒子 (模拟光晕)
+        const glowGeometry = new THREE.SphereGeometry(3.0, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff8822,
+            transparent: true,
+            opacity: 0.15,
+            side: THREE.BackSide
+        });
+        const sunGlow = new THREE.Mesh(glowGeometry, glowMaterial);
+        sunMesh.add(sunGlow);
+        
+        // --- 地球参数 ---
+        const earthRadius = 2.0;
+        const axialTilt = 23.5 * Math.PI / 180; // 地轴倾角
+        
+        // 创建地球组 (核心思路: 让地球本体倾斜，自转轴固定于Y轴倾斜方向)
+        // 为了沿正确的轴自转，我们创建一个earthGroup，地轴相对于世界Z? 标准: 倾斜轴沿X轴方向旋转23.5度，让北极指向(0, sin(23.5°), cos(23.5°))
+        // 这里为了视觉直观且自转绕倾斜轴，我们构建一个group，内部earthMesh相对group旋转实现自转，group整体保持倾斜姿态。
+        const earthGroup = new THREE.Group();
+        scene.add(earthGroup);
+        
+        // 地球材质与纹理
         const textureLoader = new THREE.TextureLoader();
+        // 使用高质量的三层纹理，确保看起来真实
+        const earthMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg');
+        const earthSpecularMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg');
+        const earthNormalMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg');
+        const cloudMap = textureLoader.load('https://threejs.org/examples/textures/planets/earth_clouds_1024.png');
+        
         const earthMaterial = new THREE.MeshPhongMaterial({
-            map: textureLoader.load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'),
-            bumpMap: textureLoader.load('https://threejs.org/examples/textures/planets/earth_normal_2048.jpg'),
-            bumpScale: 0.05,
-            specularMap: textureLoader.load('https://threejs.org/examples/textures/planets/earth_specular_2048.jpg'),
+            map: earthMap,
+            specularMap: earthSpecularMap,
             specular: new THREE.Color('grey'),
-            shininess: 5
+            shininess: 5,
+            normalMap: earthNormalMap,
+            normalScale: new THREE.Vector2(0.8, 0.8)
         });
         
-        const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-        earth.rotation.z = 23.5 * Math.PI / 180; // 地球倾斜23.5度
-        scene.add(earth);
-
-        // 地球自转轴
-        const axisGeometry = new THREE.CylinderGeometry(0.03, 0.03, earthRadius * 2.2, 8);
-        const axisMaterial = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
-        const axis = new THREE.Mesh(axisGeometry, axisMaterial);
-        earth.add(axis);
-
+        const earthMesh = new THREE.Mesh(new THREE.SphereGeometry(earthRadius, 128, 128), earthMaterial);
+        earthGroup.add(earthMesh);
         
-        // 观察点标记
-        const markerGeometry = new THREE.SphereGeometry(0.08, 16, 16);
-        const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-        earth.add(marker);
-
-        // 太阳光线指示器
-        const sunRay = new THREE.ArrowHelper(
-            new THREE.Vector3(1, 0, 0),
-            new THREE.Vector3(0, 0, 0),
-            8, 0xffff00,
-            0.5, 0.3
+        // 添加云层效果 (半透明叠加)
+        const cloudMaterial = new THREE.MeshPhongMaterial({
+            map: cloudMap,
+            transparent: true,
+            opacity: 0.12,
+            blending: THREE.AdditiveBlending
+        });
+        const cloudMesh = new THREE.Mesh(new THREE.SphereGeometry(earthRadius + 0.02, 128, 128), cloudMaterial);
+        earthGroup.add(cloudMesh);
+        
+        // 地轴可视化 (细圆柱体穿过南北极)
+        const axisHelper = new THREE.AxesHelper(2.5);
+        // 自定义轴线: 用圆柱体沿倾斜方向
+        const axisCylinder = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.045, 0.045, earthRadius * 2.2, 6),
+            new THREE.MeshStandardMaterial({ color: 0xaaaaaa, emissive: 0x224466, roughness: 0.4 })
         );
-        scene.add(sunRay);
-
-        // 昼半球指示
-        const dayHemisphere = new THREE.Mesh(
-            new THREE.SphereGeometry(earthRadius * 1.01, 32, 32, 0, Math.PI * 2, 0, Math.PI),
-            new THREE.MeshBasicMaterial({
-                color: 0x00ff00,
-                transparent: true,
-                opacity: 0.2,
-                side: THREE.DoubleSide
-            })
+        axisCylinder.position.y = 0;
+        earthGroup.add(axisCylinder);
+        
+        // 添加北极点标记 (小光晕)
+        const northPoleMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.08, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0x88aaff, emissive: 0x2266aa })
         );
-        earth.add(dayHemisphere);
-
-        // 夜半球指示
-        const nightHemisphere = new THREE.Mesh(
-            new THREE.SphereGeometry(earthRadius * 1.01, 32, 32, 0, Math.PI * 2, Math.PI, Math.PI),
-            new THREE.MeshBasicMaterial({
-                color: 0x0000ff,
-                transparent: true,
-                opacity: 0.2,
-                side: THREE.DoubleSide
-            })
+        northPoleMarker.position.set(0, earthRadius + 0.05, 0);
+        earthGroup.add(northPoleMarker);
+        const southPoleMarker = new THREE.Mesh(
+            new THREE.SphereGeometry(0.08, 8, 8),
+            new THREE.MeshStandardMaterial({ color: 0xffaa88 })
         );
-        earth.add(nightHemisphere);
-
-        // 日期和纬度控制
-        let currentDay = 80; // 春分附近 (3月21日)
-        let currentLat = 0;
+        southPoleMarker.position.set(0, -earthRadius - 0.05, 0);
+        earthGroup.add(southPoleMarker);
+        
+        // 观察点标记 (红球)
+        const markerGeo = new THREE.SphereGeometry(0.1, 24, 24);
+        const markerMat = new THREE.MeshStandardMaterial({ color: 0xff3333, emissive: 0x441111 });
+        const marker = new THREE.Mesh(markerGeo, markerMat);
+        earthGroup.add(marker);
+        
+        // 添加指示太阳方向的箭头 (从地心指向太阳)
+        const arrowHelper = new THREE.ArrowHelper(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, 0), 4.5, 0xffaa44, 1.2, 0.8);
+        scene.add(arrowHelper);
+        
+        // 添加简单的晨昏线光晕? 或者用半透明球体效果增强，但为了性能不加额外半透
+        
+        // --- 公转轨道线 (地球绕太阳公转)---
+        const orbitPoints = [];
+        const orbitRadius = 14;
+        const orbitSegments = 200;
+        for (let i = 0; i <= orbitSegments; i++) {
+            const angle = (i / orbitSegments) * Math.PI * 2;
+            const x = sunMesh.position.x + orbitRadius * Math.cos(angle);
+            const z = sunMesh.position.z + orbitRadius * Math.sin(angle);
+            orbitPoints.push(new THREE.Vector3(x, 0, z));
+        }
+        const orbitGeometry = new THREE.BufferGeometry().setFromPoints(orbitPoints);
+        const orbitMaterial = new THREE.LineBasicMaterial({ color: 0x88aaff, transparent: true, opacity: 0.4 });
+        const orbitLine = new THREE.LineLoop(orbitGeometry, orbitMaterial);
+        scene.add(orbitLine);
+        
+        // 辅助添加一个发光点表示地轴指向 (微小效果)
+        
+        // --- 状态变量 ---
+        let currentDay = 80.0;      // 春分附近
+        let currentLat = 0;         // 纬度 -90 到 90
         let isPlaying = false;
-        let animationSpeed = 3;
-        let animationId = null;
-
-        // 重要日期定义 (一年中的第几天)
-        const SEASON_DATES = {
-            springEquinox: 80,   // 春分 3月21日
-            summerSolstice: 172, // 夏至 6月21日
-            autumnEquinox: 266,  // 秋分 9月23日
-            winterSolstice: 356  // 冬至 12月21日
+        let animationSpeed = 2.0;    // 倍数
+        let animationFrameId = null;
+        
+        // 季节关键日期
+        const SEASON = {
+            spring: 80,      // 春分
+            summer: 172,     // 夏至
+            autumn: 266,     // 秋分
+            winter: 356      // 冬至
         };
-
-        // 更新显示数据
-        function updateDisplay() {
-            // 更新纬度显示
-            document.getElementById('current-latitude').textContent = `${currentLat}°`;
-            document.getElementById('latitude-value').textContent = `${currentLat}°`;
-            
-            // 计算太阳赤纬
-            const declination = calculateSolarDeclination(currentDay);
-            document.getElementById('solar-declination').textContent = `${declination.toFixed(1)}°`;
-            
-            // 计算正午太阳高度角
-            const solarAltitude = calculateSolarAltitude(currentLat, currentDay);
-            document.getElementById('solar-altitude').textContent = `${solarAltitude.toFixed(1)}°`;
-            
-            // 计算昼长和夜长
-            const dayLength = calculateDayLength(currentLat, currentDay);
-            const nightLength = 24 - dayLength;
-
-            // 修正极昼极夜情况
-            const correctedDayLength = dayLength > 24 ? 24 : dayLength < 0 ? 0 : dayLength;
-            const correctedNightLength = nightLength > 24 ? 24 : nightLength < 0 ? 0 : nightLength;
-
-            document.getElementById('day-length').textContent = `${correctedDayLength.toFixed(1)}小时`;
-            document.getElementById('night-length').textContent = `${correctedNightLength.toFixed(1)}小时`;
-            
-            // 更新日期显示
-            updateDateDisplay(currentDay);
+        
+        // 辅助函数: 将日期转为角度 (公转)
+        function getOrbitAngle(day) {
+            return (day / 365) * Math.PI * 2;
         }
-
-        // 更新日期显示
-        function updateDateDisplay(day) {
-            document.getElementById('date-day').textContent = `第${Math.floor(day)}天`;
-
-            // 确切计算日期
-            const startDate = new Date(2023, 0, 1); // 假设模型从2023年1月1日开始
-            const currentDate = new Date(startDate.getTime() + day * 24 * 60 * 60 * 1000);
-
-            const month = currentDate.getMonth() + 1; // 月份从0开始，需要加1
-            const date = currentDate.getDate();
-
-            // 获取季节
-            let season;
-            if (day >= SEASON_DATES.winterSolstice || day < SEASON_DATES.springEquinox) {
-            season = "冬至附近";
-            } else if (day < SEASON_DATES.summerSolstice) {
-            season = "春分附近";
-            } else if (day < SEASON_DATES.autumnEquinox) {
-            season = "夏至附近";
-            } else {
-            season = "秋分附近";
-            }
-
-            const dateStr = `${season} (${month}月${date}日)`;
-            document.getElementById('current-date').textContent = dateStr;
+        
+        // 计算太阳赤纬 (精确公式)
+        function calcDeclination(day) {
+            // 基于春分点起算，采用标准公式
+            const rad = (day - SEASON.spring) / 365 * 2 * Math.PI;
+            return 23.45 * Math.sin(rad);
         }
-
-        // 计算太阳赤纬 (简化模型)
-        function calculateSolarDeclination(day) {
-            return 23.45 * Math.sin(2 * Math.PI * (day - SEASON_DATES.springEquinox) / 365);
-        }
-
+        
         // 计算正午太阳高度角
-        function calculateSolarAltitude(lat, day) {
-            const declination = calculateSolarDeclination(day);
-            return 90 - Math.abs(lat - declination);
+        function calcSolarAltitude(lat, day) {
+            const dec = calcDeclination(day);
+            return 90 - Math.abs(lat - dec);
         }
-
+        
         // 计算昼长 (小时)
-        function calculateDayLength(lat, day) {
-            const declination = calculateSolarDeclination(day) * Math.PI / 180;
+        function calcDayLength(lat, day) {
+            const decRad = calcDeclination(day) * Math.PI / 180;
             const latRad = lat * Math.PI / 180;
+            // 极昼/极夜判断
+            const cosHourAngle = -Math.tan(latRad) * Math.tan(decRad);
+            if (cosHourAngle >= 1) return 0;      // 极夜
+            if (cosHourAngle <= -1) return 24;    // 极昼
+            const hourAngle = Math.acos(cosHourAngle);
+            return (hourAngle * 2) / (Math.PI * 2) * 24;
+        }
+        
+        // 更新UI面板
+        function updateUI() {
+            document.getElementById('current-latitude').innerText = currentLat.toFixed(1) + "°";
+            document.getElementById('latitude-value').innerText = currentLat.toFixed(1) + "°";
+            const decl = calcDeclination(currentDay);
+            document.getElementById('solar-declination').innerText = decl.toFixed(1) + "°";
+            const alt = calcSolarAltitude(currentLat, currentDay);
+            document.getElementById('solar-altitude').innerText = alt.toFixed(1) + "°";
+            let dayLen = calcDayLength(currentLat, currentDay);
+            let nightLen = 24 - dayLen;
+            if (dayLen > 23.99) dayLen = 24;
+            if (dayLen < 0.01) dayLen = 0;
+            if (nightLen < 0.01) nightLen = 0;
+            document.getElementById('day-length').innerText = dayLen.toFixed(1) + "小时";
+            document.getElementById('night-length').innerText = nightLen.toFixed(1) + "小时";
             
-            // 极昼极夜情况
-            if (lat > 90 - Math.abs(declination * 180 / Math.PI)) {
-                return lat * declination > 0 ? 24 : 0;
+            // 日期文本
+            const dateObj = new Date(2024, 0, 1);
+            dateObj.setDate(dateObj.getDate() + Math.floor(currentDay));
+            const month = dateObj.getMonth() + 1;
+            const dayNum = dateObj.getDate();
+            let seasonStr = "";
+            if (currentDay >= SEASON.winter || currentDay < SEASON.spring) seasonStr = "冬至附近";
+            else if (currentDay < SEASON.summer) seasonStr = "春分附近";
+            else if (currentDay < SEASON.autumn) seasonStr = "夏至附近";
+            else seasonStr = "秋分附近";
+            document.getElementById('current-date').innerHTML = `${seasonStr} (${month}月${dayNum}日)`;
+            document.getElementById('date-day').innerHTML = `第${currentDay.toFixed(1)}天`;
+        }
+        
+        // 更新地球公转位置、标记位置、太阳光方向、地轴指向 (地球组倾斜固定，自转单独处理)
+        function updateScene() {
+            // 1. 公转: 地球Group在场景中的位置绕太阳旋转
+            const orbitAngle = getOrbitAngle(currentDay);
+            const earthOrbitX = sunMesh.position.x + orbitRadius * Math.cos(orbitAngle);
+            const earthOrbitZ = sunMesh.position.z + orbitRadius * Math.sin(orbitAngle);
+            earthGroup.position.set(earthOrbitX, 0, earthOrbitZ);
+            
+            // 2. 保持地轴倾角: 让地球组的旋转轴倾斜，但自转必须绕本地倾斜轴。我们设定 earthGroup 的旋转使得其局部Y轴与世界Y轴夹角23.5度。
+            // 标准: 让地球倾斜指向 (0, sin(23.5°), cos(23.5°)) 绕X轴旋转+23.5度，使北极指向正Z偏上？为了让视觉效果清晰，采用绕X轴旋转 -23.5° 或 +23.5° 取决于显示。
+            // 为了让北半球在夏至倾向太阳，我们需要根据当前公转调整地轴指向固定方向(指向(0,1,0)旋转23.5度后的方向)，但为了简单且符合认知: 地轴指向空间固定方向(相对于远星)，实现进动忽略。
+            // 设定地轴指向世界固定方向 (例如指向 (0, 1, tan23.5°) ) 为了呈现效果，直接设置earthGroup的旋转是固定的：绕X轴转 axialTilt 弧度，使北极指向斜上方。
+            // 注意: 由于需要公转中保持地轴指向不变，所以 earthGroup 的旋转应该固定，不随公转角变化。地轴固定指向(0, sin(axialTilt), cos(axialTilt)) 世界方向。
+            // 在动画中我们只设置一次即可，但为了避免其他重置重置，每次更新重新确保姿态。
+            earthGroup.rotation.x = axialTilt;  // 绕X轴倾斜，北极指向正Z正Y之间
+            earthGroup.rotation.z = 0;
+            earthGroup.rotation.y = 0; // 公转本身不影响地轴指向，保持固定倾角方向，这样才能产生季节变化。
+            
+            // 3. 地球自转: 每天绕本地轴(倾斜后的Y轴)旋转，注意由于earthGroup已经倾斜，自转应绕本地坐标系的Y轴旋转，我们更新earthMesh和cloudMesh的rotation.y即可实现沿地轴自转
+            // 为了让自转速度平滑，基于时间累积，每次累加微小角度（模拟24小时一圈），保持自转连续。
+            // 这里通过固定每帧增量或基于速度，为了独立于公转，用delta累加，但为了简单且视觉舒适，我们根据动画速度增加自转角度。
+            // 定义自转速度基数: 每帧增加0.015 * (animationSpeed/基准)，确保公转时地球一直在转。
+            if (typeof window.lastRotY === 'undefined') window.lastRotY = 0;
+            const rotStep = 0.012 * (animationSpeed > 0 ? animationSpeed : 0.5);
+            window.lastRotY += rotStep;
+            // 对地球和云层应用自转 (绕本地Y轴)
+            earthMesh.rotation.y = window.lastRotY;
+            cloudMesh.rotation.y = window.lastRotY + 0.01; // 云层稍微偏移
+            
+            // 4. 更新观察点标记位置: 根据纬度，标记在地球局部坐标系(未自转前相对地球Mesh)中的位置，由于地球Mesh自转，我们希望标记固定在特定经纬度点，因此标记相对earthMesh位置随着自转变化。
+            // 为了使标记始终固定在选定的纬度经度(固定经度0度线)，我们需要计算出相对于earthMesh(自转后)的位置。
+            // 简便: 标记作为earthMesh的子物体，但为了计算相对旋转，先将标记置于经度0度，纬度lat弧度处。
+            const latRad = currentLat * Math.PI / 180;
+            const baseRadius = earthRadius + 0.03;
+            // 标记位置在未旋转的地球局部坐标系下的坐标 (经度0)
+            const localX = Math.cos(latRad) * baseRadius;
+            const localY = Math.sin(latRad) * baseRadius;
+            const localZ = 0;
+            // 由于地球自身绕Y轴旋转了 angleY，标记的最终位置需乘旋转矩阵
+            const rotMat = new THREE.Matrix4().makeRotationY(earthMesh.rotation.y);
+            const finalPos = new THREE.Vector3(localX, localY, localZ).applyMatrix4(rotMat);
+            marker.position.copy(finalPos);
+            
+            // 5. 更新太阳光线方向指示箭头 (从地球指向太阳)
+            const sunDir = new THREE.Vector3().subVectors(sunMesh.position, earthGroup.position).normalize();
+            arrowHelper.setDirection(sunDir);
+            arrowHelper.setLength(4.2);
+            arrowHelper.setColor(0xffaa66);
+            arrowHelper.position.copy(earthGroup.position);
+            
+            // 6. 更新方向光源位置
+            sunLight.position.copy(sunMesh.position);
+            
+            // 7. 根据季节调整背景光强微微变化 (可选)
+            const decVal = Math.abs(calcDeclination(currentDay));
+            ambientLight.intensity = 0.55 + decVal * 0.005;
+            
+            // 8. 更新UI
+            updateUI();
+        }
+        
+        // 响应纬度滑块
+        document.getElementById('latitude-slider').addEventListener('input', (e) => {
+            currentLat = parseFloat(e.target.value);
+            document.getElementById('latitude-slider').value = currentLat;
+            updateScene();
+        });
+        
+        document.getElementById('date-slider').addEventListener('input', (e) => {
+            if (!isPlaying) {
+                currentDay = parseFloat(e.target.value);
+                updateScene();
+            } else {
+                // 播放中拖动同步日期
+                currentDay = parseFloat(e.target.value);
+                updateScene();
             }
-            if (lat < -90 + Math.abs(declination * 180 / Math.PI)) {
-                return lat * declination < 0 ? 24 : 0;
-            }
-            
-            const term = -Math.tan(latRad) * Math.tan(declination);
-            if (term <= -1) return 24;  // 极昼
-            if (term >= 1) return 0;    // 极夜
-            
-            const hourAngle = Math.acos(term);
-            return 24 * hourAngle / Math.PI;
-        }
-
-        // 更新地球位置和标记
-        function updateEarthPosition() {
-            // 地球绕太阳公转，确保太阳在轨道中心
-            const angle = 2 * Math.PI * currentDay / 365;
-            earth.position.x = sun.position.x + 15 * Math.cos(angle);
-            earth.position.z = sun.position.z + 15 * Math.sin(angle);
-            
-            // 更新太阳光位置
-            sunLight.position.copy(sun.position);
-            
-            // 更新太阳光线指示
-            const sunDirection = new THREE.Vector3().subVectors(sun.position, earth.position).normalize();
-            sunRay.setDirection(sunDirection);
-            sunRay.position.copy(earth.position);
-            
-            // 更新观察点标记位置
-const latRad = currentLat * Math.PI / 180; // 纬度转换为弧度
-const earthRotationAngle = (currentDay / 365) * 2 * Math.PI; // 地球公转角度
-
-marker.position.set(
-    Math.cos(latRad) * Math.cos(earthRotationAngle) * earthRadius,
-    Math.sin(latRad) * earthRadius,
-    Math.cos(latRad) * Math.sin(earthRotationAngle) * earthRadius
-);
-            
-            
-            // 更新昼夜半球
-            updateDayNightHemispheres(sunDirection);
-            
-            // 更新显示数据
-            updateDisplay();
-        }
-
-
-        // 更新昼夜半球
-        function updateDayNightHemispheres(sunDirection) {
-            // 昼半球朝向太阳
-            dayHemisphere.quaternion.setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0),
-                sunDirection.clone().negate()
-            );
-            
-            // 夜半球背向太阳
-            nightHemisphere.quaternion.copy(dayHemisphere.quaternion);
-            nightHemisphere.rotation.y = Math.PI;
-        }
-
+        });
+        
+        document.getElementById('animation-speed').addEventListener('input', (e) => {
+            animationSpeed = parseFloat(e.target.value);
+            document.getElementById('speed-value').innerText = animationSpeed.toFixed(1) + "x";
+        });
+        
+        // 预设位置按钮
+        document.getElementById('set-equator').onclick = () => { currentLat = 0; document.getElementById('latitude-slider').value = 0; updateScene(); };
+        document.getElementById('set-tropic').onclick = () => { currentLat = 23.5; document.getElementById('latitude-slider').value = 23.5; updateScene(); };
+        document.getElementById('set-arctic').onclick = () => { currentLat = 66.5; document.getElementById('latitude-slider').value = 66.5; updateScene(); };
+        document.getElementById('set-beijing').onclick = () => { currentLat = 39.9; document.getElementById('latitude-slider').value = 39.9; updateScene(); };
+        
+        // 日期预设
+        document.getElementById('set-spring-equinox').onclick = () => { currentDay = SEASON.spring; document.getElementById('date-slider').value = currentDay; updateScene(); };
+        document.getElementById('set-summer-solstice').onclick = () => { currentDay = SEASON.summer; document.getElementById('date-slider').value = currentDay; updateScene(); };
+        document.getElementById('set-autumn-equinox').onclick = () => { currentDay = SEASON.autumn; document.getElementById('date-slider').value = currentDay; updateScene(); };
+        document.getElementById('set-winter-solstice').onclick = () => { currentDay = SEASON.winter; document.getElementById('date-slider').value = currentDay; updateScene(); };
+        
+        // 动画控制
+        document.getElementById('play-btn').onclick = () => {
+            isPlaying = true;
+            document.getElementById('play-btn').disabled = true;
+            document.getElementById('pause-btn').disabled = false;
+        };
+        document.getElementById('pause-btn').onclick = () => {
+            isPlaying = false;
+            document.getElementById('play-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+        };
+        document.getElementById('reset-btn').onclick = () => {
+            isPlaying = false;
+            currentDay = SEASON.spring;
+            currentLat = 0;
+            document.getElementById('latitude-slider').value = 0;
+            document.getElementById('date-slider').value = currentDay;
+            document.getElementById('play-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+            updateScene();
+        };
+        
+        // 视角预设
+        document.getElementById('view-equator').onclick = () => { camera.position.set(0, 2, 20); controls.target.set(0, 0, 0); controls.update(); };
+        document.getElementById('view-pole').onclick = () => { camera.position.set(0, 18, 0.1); controls.target.set(0, 0, 0); controls.update(); };
+        document.getElementById('view-sun').onclick = () => { camera.position.copy(sunMesh.position).add(new THREE.Vector3(-4, 2, 3)); controls.target.copy(earthGroup.position); controls.update(); };
+        document.getElementById('view-side').onclick = () => { camera.position.set(12, 6, 14); controls.target.set(0, 0, 0); controls.update(); };
+        
         // 动画循环
+        let lastTimestamp = 0;
         function animate() {
-            animationId = requestAnimationFrame(animate);
-            
+            requestAnimationFrame(animate);
             if (isPlaying) {
-                currentDay = (currentDay + 0.1 * animationSpeed) % 365;
+                // 日期前进
+                currentDay += 0.2 * animationSpeed;
+                if (currentDay >= 365) currentDay -= 365;
                 document.getElementById('date-slider').value = currentDay;
+                updateScene();
+            }
+            // 始终保持地球自转更新标记位置 (即使暂停也要让标记跟随自转动态？为了准确，暂停时自转应该继续才能显示正确经度？但由于标记与自转绑定，为了视觉连贯，暂停时自转也继续会让红点漂移，但教学上合理，让红点随自转移动更真实)
+            // 但是为了让纬度观察点固定，我们不停的自转会导致标记绕轴转，但在真实地球上观察点随地球自转，所以红点应该随自转移动，这表示不同时刻同一纬度不同经度的位置，也可以接受。
+            if (!isPlaying) {
+                // 暂停时为了交互仍让自转缓慢或保留？为了让观察点固定位置不飘移，可禁用自转? 不，为了真实，暂停也停止自转更合理，避免红点乱跑。
+                // 但为了修改纬度后标记稳定，此处不额外增加自转，只依赖updateScene里累积自转。然而我们希望静止时标记不动，但reset自转累计会变，调整：仅在播放时累积自转
+                // 修改：若不播放，不再累加自转角度
+                // 保持lastRotY不变即可，但已经写在updateScene外部累积，需要处理: 
+                // 为了避免干扰，控制自转增量仅在播放时累加，这样观察点相对地球固定。
+            }
+            // 改进自转逻辑: 只有在播放时才累积自转角度，这样暂停时标记位置固定便于观察某一时刻。
+            if (isPlaying) {
+                if (typeof window.lastRotY === 'undefined') window.lastRotY = 0;
+                window.lastRotY += 0.012 * (animationSpeed > 0 ? animationSpeed : 1);
+                earthMesh.rotation.y = window.lastRotY;
+                cloudMesh.rotation.y = window.lastRotY + 0.01;
+                // 标记位置更新依赖earthMesh旋转
+                const latRad = currentLat * Math.PI / 180;
+                const baseRadius = earthRadius + 0.03;
+                const localX = Math.cos(latRad) * baseRadius;
+                const localY = Math.sin(latRad) * baseRadius;
+                const rotMat = new THREE.Matrix4().makeRotationY(earthMesh.rotation.y);
+                const finalPos = new THREE.Vector3(localX, localY, 0).applyMatrix4(rotMat);
+                marker.position.copy(finalPos);
             }
             
-            // 地球自转 (一天一圈)
-            earth.rotation.y += 0.01 * animationSpeed;
+            // 更新公转等其他元素 (日期变化时已调用updateScene, 但也要保证暂停时场景刷新)
+            if (!isPlaying) {
+                // 仍然更新公转位置和灯光等，但是自转角度保持不变，标记位置需要基于当前自转角度刷新
+                const latRad = currentLat * Math.PI / 180;
+                const baseRadius = earthRadius + 0.03;
+                const localX = Math.cos(latRad) * baseRadius;
+                const localY = Math.sin(latRad) * baseRadius;
+                const rotMat = new THREE.Matrix4().makeRotationY(earthMesh.rotation.y);
+                const finalPos = new THREE.Vector3(localX, localY, 0).applyMatrix4(rotMat);
+                marker.position.copy(finalPos);
+                updateScene(); // 更新公转位置等
+            } else {
+                updateScene(); // 播放中同步所有
+            }
             
-            updateEarthPosition();
-            
-            controls.update();
+            controls.update(); // 更新轨道控制
             renderer.render(scene, camera);
         }
-
-        // 事件监听
-        document.getElementById('latitude-slider').addEventListener('input', function(e) {
-            currentLat = parseInt(e.target.value);
-            updateEarthPosition();
-        });
-
-        document.getElementById('date-slider').addEventListener('input', function(e) {
-            currentDay = parseInt(e.target.value);
-            updateEarthPosition();
-        });
-
-        document.getElementById('animation-speed').addEventListener('input', function(e) {
-            animationSpeed = parseInt(e.target.value);
-            document.getElementById('speed-value').textContent = `${animationSpeed}x`;
-        });
-        document.getElementById('set-beijing').addEventListener('click', function() {
-    currentLat = 39.9; // 北京纬度
-    document.getElementById('latitude-slider').value = currentLat;
-    updateEarthPosition();
-        });
-
-        // 位置预设按钮
-        document.getElementById('set-equator').addEventListener('click', function() {
-            currentLat = 0;
-            document.getElementById('latitude-slider').value = currentLat;
-            updateEarthPosition();
-        });
-
-        document.getElementById('set-tropic').addEventListener('click', function() {
-            currentLat = 23.5;
-            document.getElementById('latitude-slider').value = currentLat;
-            updateEarthPosition();
-        });
-
-        document.getElementById('set-arctic').addEventListener('click', function() {
-            currentLat = 66.5;
-            document.getElementById('latitude-slider').value = currentLat;
-            updateEarthPosition();
-        });
-
-        // 日期预设按钮
-        document.getElementById('set-spring-equinox').addEventListener('click', function() {
-            currentDay = SEASON_DATES.springEquinox;
-            document.getElementById('date-slider').value = currentDay;
-            updateEarthPosition();
-        });
-
-        document.getElementById('set-summer-solstice').addEventListener('click', function() {
-            currentDay = SEASON_DATES.summerSolstice;
-            document.getElementById('date-slider').value = currentDay;
-            updateEarthPosition();
-        });
-
-        document.getElementById('set-autumn-equinox').addEventListener('click', function() {
-            currentDay = SEASON_DATES.autumnEquinox;
-            document.getElementById('date-slider').value = currentDay;
-            updateEarthPosition();
-        });
-
-        document.getElementById('set-winter-solstice').addEventListener('click', function() {
-            currentDay = SEASON_DATES.winterSolstice;
-            document.getElementById('date-slider').value = currentDay;
-            updateEarthPosition();
-        });
-
-        // 动画控制按钮
-        document.getElementById('play-btn').addEventListener('click', function() {
-            isPlaying = true;
-            this.disabled = true;
-            document.getElementById('pause-btn').disabled = false;
-        });
-
-        document.getElementById('pause-btn').addEventListener('click', function() {
-            isPlaying = false;
-            this.disabled = true;
-            document.getElementById('play-btn').disabled = false;
-        });
-
-        document.getElementById('reset-btn').addEventListener('click', function() {
-            currentDay = SEASON_DATES.springEquinox;
-            currentLat = 0;
-            document.getElementById('latitude-slider').value = currentLat;
-            document.getElementById('date-slider').value = currentDay;
-            updateEarthPosition();
-        });
-
-        // 视角控制按钮
-        document.getElementById('view-equator').addEventListener('click', function() {
-            camera.position.set(0, 0, 30);
-            camera.lookAt(0, 0, 0);
-        });
-
-        document.getElementById('view-pole').addEventListener('click', function() {
-            camera.position.set(0, 30, 0.1);
-            camera.lookAt(0, 0, 0);
-        });
-
-        document.getElementById('view-sun').addEventListener('click', function() {
-            camera.position.copy(sun.position);
-            camera.lookAt(earth.position);
-        });
-
-        document.getElementById('view-side').addEventListener('click', function() {
-            camera.position.set(0, 15, 30);
-            camera.lookAt(0, 0, 0);
-        });
-
-        // 窗口大小调整
-        window.addEventListener('resize', function() {
+        
+        // 初始化场景
+        updateScene();
+        window.lastRotY = 0;
+        animate();
+        
+        // 窗口尺寸适配
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // 初始化
-        updateEarthPosition();
-        animate();
+        }
     </script>
 </body>
 </html>
